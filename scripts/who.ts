@@ -1,4 +1,4 @@
-import { IUrsamuSDK, IDBObj } from "../../@types/UrsamuSDK.ts";
+import type { IUrsamuSDK, IDBObj } from "../../@types/UrsamuSDK.ts";
 
 /**
  * Rhost Vision: who.ts
@@ -54,32 +54,37 @@ export default async (u: IUrsamuSDK) => {
     return bLogin - aLogin;
   });
 
-  // Header — match Rhost column layout
+  const renderRow = (p: IDBObj): string => {
+    const pRaw = rawName(p);
+    const pColored = coloredName(p);
+    const onFor = formatOnFor(getLoginTime(p));
+    const idlePadded = formatIdle(p.state.lastCommand).padStart(4);
+    const doing = (p.state.doing as string) || "";
+    const pad = " ".repeat(Math.max(1, 21 - pRaw.length));
+    return `${pColored}${pad}${onFor.padStart(8)}  ${idlePadded}  ${doing}`;
+  };
+
+  // Per-row — WHOROWFORMAT (%0 = default rendered row)
+  const rows: string[] = [];
+  for (const p of players) {
+    const defaultRow = renderRow(p);
+    const rowOverride = await u.util.resolveGlobalFormat?.("WHOROWFORMAT", defaultRow);
+    rows.push(rowOverride != null ? rowOverride : defaultRow);
+  }
+
+  // Default block — both fallback output and %0 for WHOFORMAT
   const lines: string[] = [];
   lines.push(
     `${"Player Name".padEnd(21)}${"On For".padStart(8)}  ${"Idle".padStart(4)}  Doing`,
   );
-
-  // Players
-  for (const p of players) {
-    const pRaw = rawName(p);
-    const pColored = coloredName(p);
-    const onFor = formatOnFor(getLoginTime(p));
-    const idleRaw = formatIdle(p.state.lastCommand);
-    const doing = (p.state.doing as string) || "";
-    const idlePadded = idleRaw.padStart(4);
-    const pad = " ".repeat(Math.max(1, 21 - pRaw.length));
-    lines.push(
-      `${pColored}${pad}${onFor.padStart(8)}  ${idlePadded}  ${doing}`,
-    );
-  }
-
-  // Footer
+  for (const r of rows) lines.push(r);
   lines.push(
     `${players.length} Player${players.length === 1 ? "" : "s"} logged in.`,
   );
+  const defaultBlock = lines.join("\n");
 
-  u.send(lines.join("\n"));
+  const blockOverride = await u.util.resolveGlobalFormat?.("WHOFORMAT", defaultBlock);
+  u.send(blockOverride != null ? blockOverride : defaultBlock);
 
   // Web UI
   u.ui.layout({
