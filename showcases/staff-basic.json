@@ -1,0 +1,29 @@
+{
+  "key": "staff-basic",
+  "title": "+staff — live demo",
+  "description": "Online-staff roster: empty state and populated state, visible to staff and players alike.",
+  "vars": {
+    "player": "Tester"
+  },
+  "steps": [
+    { "sub": "+staff With Nobody Around" },
+    { "note": "+staff lists every connected, non-dark admin/wizard/superuser. With no staff online, the panel still frames cleanly via an empty-state row." },
+    { "disconnect": "Admin" },
+    { "cmd": "+staff", "label": "empty staff list" },
+    { "expect": "No staff are currently online." },
+
+    { "sub": "+staff With Admins Online" },
+    { "connect": "Admin" },
+    { "note": "Each row shows the staff member's display name, on-for, idle, and doing line — colour-coded by idle bucket." },
+    { "cmd": "+staff", "as": "admin", "label": "viewed by an admin" },
+    { "expect": "Staff Online" },
+    { "expect": "Player Name" },
+
+    { "sub": "Visible To Everyone" },
+    { "note": "+staff is not staff-locked — any connected player can check who is on duty." },
+    { "cmd": "+staff", "label": "viewed by a regular player" },
+    { "expect": "Staff Online" },
+
+    { "reset": true }
+  ]
+}

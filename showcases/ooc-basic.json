@@ -1,0 +1,29 @@
+{
+  "key": "ooc-basic",
+  "title": "ooc — live demo",
+  "description": "Room OOC chat with say and pose forms, wrapped in a recognisable <OOC> tag.",
+  "vars": {
+    "speaker": "Tester"
+  },
+  "steps": [
+    { "sub": "Plain OOC Speech" },
+    { "note": "ooc <message> broadcasts to the room wrapped in a recognisable <OOC> tag, so RP and OOC chatter never get mixed up." },
+    { "cmd": "ooc Hi everyone!", "label": "say something OOC" },
+    { "expect": "OOC" },
+    { "expect": "says, \"Hi everyone!\"" },
+
+    { "sub": "OOC Pose Form" },
+    { "note": "Prefix the message with a colon to pose instead of speak. The tag stays, but the sentence reads as an action." },
+    { "cmd": "ooc :waves at the room.", "label": "OOC pose" },
+    { "expect": "OOC" },
+    { "expect": "waves at the room." },
+
+    { "sub": "Empty Argument" },
+    { "note": "Calling ooc with no message prints a usage hint instead of broadcasting an empty line." },
+    { "cmd": "ooc", "label": "no message" },
+    { "expect": "Usage:" },
+    { "expect": "ooc <message>" },
+
+    { "reset": true }
+  ]
+}

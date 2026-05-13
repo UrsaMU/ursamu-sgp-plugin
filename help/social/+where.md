@@ -1,25 +1,26 @@
-# +WHERE
++WHERE
 
-See where all connected players are located.
+See where connected players are located, grouped by grid area.
 
-## Syntax
+SYNTAX
+  +where
+  where
 
-`+where`
+EXAMPLES
+  +where              List all online players by area.
 
-## Description
+NOTES
+  78-col bordered display. Columns: Player | Type | Idle | Location.
+  Players are grouped under area headers ("---< Area >---") taken from
+  each room's grid_area attribute. Areas sort alphabetically; "OOC"
+  always renders last. Within an area, players sort alphabetically.
 
-Lists every connected (non-dark) player grouped by their current room. Rooms
-are sorted by player count, most populated first. Each name is followed by idle
-time in color-coded parentheses.
+  The Type column reads "Staff" for wizard/admin/superuser; blank
+  otherwise. Idle is color-coded (green recent, yellow hours, dim days).
 
-- Green: idle less than 5 minutes
-- Normal: idle 5–14 minutes
-- Dark gray: idle 15+ minutes
+  Players in rooms flagged dark or unfindable list under an
+  "Unfindable:" section without a location — staff bypass this and see
+  everyone. Dark players are hidden from non-staff entirely. Footer
+  shows the total visible count.
 
-## Related
-
-`help who` `help +staff` `help +finger`
-
-## Example
-
-`+where`
+SEE ALSO: help who, help +staff, help +finger

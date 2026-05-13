@@ -1,0 +1,36 @@
+{
+  "key": "exittype-basic",
+  "title": "@exittype — live demo",
+  "description": "Builder command that tags an exit's TYPE attribute; the look command groups exits into sections by that value, sorted alphabetically.",
+  "vars": { "player": "Builder" },
+  "setup": {
+    "character": {
+      "flags": ["builder"]
+    },
+    "targets": {
+      "Inn": {
+        "flags": ["exit"],
+        "data": { "name": "Inn" }
+      }
+    },
+    "room": { "name": "Workshop" }
+  },
+  "steps": [
+    { "sub": "Setting a TYPE" },
+    { "note": "@exittype <exit>=<value> stores the TYPE attribute on the exit. Equivalent to `&type <exit>=<value>`." },
+    { "cmd": "@exittype Inn=tavern", "label": "tag the Inn exit" },
+    { "expect": "Set TYPE on Inn to tavern" },
+
+    { "sub": "Clearing a TYPE" },
+    { "note": "Empty value clears the attribute. The look command then falls back to cardinal auto-detect or the default \"exit\" bucket." },
+    { "cmd": "@exittype Inn=", "label": "clear it" },
+    { "expect": "Cleared TYPE on Inn" },
+
+    { "sub": "Refusals" },
+    { "note": "Targets that aren't exits, or that the builder can't edit, get a flat refusal — no attribute write." },
+    { "cmd": "@exittype NoSuchExit=tavern", "label": "missing target" },
+    { "expect": "No exit found matching" },
+
+    { "reset": true }
+  ]
+}

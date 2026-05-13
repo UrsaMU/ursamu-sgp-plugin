@@ -1,5 +1,5 @@
 /**
- * Rhost Vision — Layout Utilities
+ * @ursamu/globals — Layout Utilities
  *
  * Pure string-manipulation helpers for building 78-char MUSH output.
  * No SDK dependency — copy any function into your own scripts.
@@ -13,7 +13,8 @@
  * Raw ANSI escapes (\x1b[…m) are also stripped when measuring width.
  */
 
-import type { RhostTheme } from "./theme.ts";
+import type { GlobalsTheme } from "./theme.ts";
+import { renderHeader, renderDivider, renderFooter } from "./renderer.ts";
 
 // ─── Visible Width ────────────────────────────────────────────────────────────
 
@@ -24,9 +25,10 @@ import type { RhostTheme } from "./theme.ts";
 export function visibleLength(s: string): number {
   return s
     // deno-lint-ignore no-control-regex
-    .replace(/\x1b\[[0-9;]*m/g, "")   // raw ANSI escapes
-    .replace(/%c[a-zA-Z]/g, "")        // MUSH color codes  (%cX, %ch, %cn, …)
-    .replace(/%[rRnt]/g, "")           // MUSH subs that produce no visible char
+    .replace(/\x1b\[[0-9;]*m/g, "")     // raw ANSI escapes
+    .replace(/<#[0-9a-fA-F]{6}>/g, "")  // inline hex color codes from +gname / moniker
+    .replace(/%c[a-zA-Z]/g, "")         // MUSH color codes  (%cX, %ch, %cn, …)
+    .replace(/%[rRnt]/g, "")            // MUSH subs that produce no visible char
     .length;
 }
 
@@ -60,18 +62,8 @@ export function padCenter(s: string, n: number, char = " "): string {
  *   → "============================= The Grand Hall =============================="
  *     (78 chars, bright white borders, bright white title)
  */
-export function header(title: string, t: RhostTheme): string {
-  const { width, borderChar, colors: c } = t;
-  if (!title) return c.border + borderChar.repeat(width) + c.reset;
-  const innerVis = visibleLength(title) + 2; // 1 space on each side
-  const fill     = width - innerVis;
-  const left     = Math.floor(fill / 2);
-  const right    = fill - left;
-  return (
-    c.border + borderChar.repeat(left)  + c.reset +
-    " " + c.header + title + c.reset + " " +
-    c.border + borderChar.repeat(right) + c.reset
-  );
+export function header(title: string, t?: GlobalsTheme): Promise<string> {
+  return renderHeader(title, t?.width);
 }
 
 /**
@@ -79,9 +71,8 @@ export function header(title: string, t: RhostTheme): string {
  *
  *   footer(t)  →  "=========================================…" (78 chars)
  */
-export function footer(t: RhostTheme): string {
-  const { width, borderChar, colors: c } = t;
-  return c.border + borderChar.repeat(width) + c.reset;
+export function footer(t?: GlobalsTheme): Promise<string> {
+  return renderFooter(t?.width);
 }
 
 /**
@@ -90,18 +81,8 @@ export function footer(t: RhostTheme): string {
  *   divider("Players", t)   →  "------------ Players ------------"
  *   divider(null, t)        →  "------------------------------------"
  */
-export function divider(label: string | null, t: RhostTheme): string {
-  const { width, dividerChar, colors: c } = t;
-  if (!label) return c.border + dividerChar.repeat(width) + c.reset;
-  const innerVis = visibleLength(label) + 2;
-  const fill     = width - innerVis;
-  const left     = Math.floor(fill / 2);
-  const right    = fill - left;
-  return (
-    c.border + dividerChar.repeat(left)  + c.reset +
-    " " + c.label + label + c.reset + " " +
-    c.border + dividerChar.repeat(right) + c.reset
-  );
+export function divider(label: string | null, t?: GlobalsTheme): Promise<string> {
+  return renderDivider(label, t?.width);
 }
 
 // ─── Word Wrap ────────────────────────────────────────────────────────────────
@@ -189,7 +170,7 @@ export function bar(
   filled: number,
   total: number,
   barWidth: number,
-  t: RhostTheme,
+  t: GlobalsTheme,
 ): string {
   const ratio   = total > 0 ? Math.min(1, Math.max(0, filled / total)) : 0;
   const nFilled = Math.round(ratio * barWidth);
@@ -225,7 +206,7 @@ export interface SheetField {
  *
  * `labelWidth` — visible width reserved for the label column.
  */
-export function sheet(fields: SheetField[], labelWidth: number, t: RhostTheme): string[] {
+export function sheet(fields: SheetField[], labelWidth: number, t: GlobalsTheme): string[] {
   const { colors: c } = t;
   return fields.map(({ label, value, bar: b }) => {
     const labelStr = c.label + padLeft(label, labelWidth) + c.reset;
@@ -253,13 +234,13 @@ export function sheet(fields: SheetField[], labelWidth: number, t: RhostTheme): 
  * `colWidths` — visible widths for the first `colWidths.length` columns.
  * The final column fills whatever space remains.
  */
-export function table(
+export async function table(
   headers: string[],
   rows: string[][],
   colWidths: number[],
   totalWidth: number,
-  t: RhostTheme,
-): string[] {
+  t: GlobalsTheme,
+): Promise<string[]> {
   const gap        = 2;
   const lastWidth  = totalWidth - colWidths.reduce((a, w) => a + w + gap, 0);
   const allWidths  = [...colWidths, lastWidth];
@@ -269,13 +250,14 @@ export function table(
 
   const { colors: c } = t;
   const headerCells = headers.map((h, i) => c.label + padLeft(h, allWidths[i] ?? 0) + c.reset);
+  const div = await divider(null, t);
 
   return [
-    divider(null, t),
+    div,
     headerCells.join(" ".repeat(gap)),
-    divider(null, t),
+    div,
     ...rows.map(renderRow),
-    divider(null, t),
+    div,
   ];
 }
 
@@ -288,7 +270,7 @@ export function table(
  * This is used by index.ts to inline the utilities into the scripts written
  * to system/scripts/, making those scripts fully standalone.
  */
-export function inlineUtils(t: RhostTheme): string {
+export function inlineUtils(t: GlobalsTheme): string {
   const { width: W, borderChar: BC, dividerChar: DC, barFill: BF, barEmpty: BE, colors: c } = t;
   return `
 // ─── rhost-vision layout constants ───────────────────────────────────────────

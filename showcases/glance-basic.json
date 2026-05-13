@@ -1,0 +1,34 @@
+{
+  "key": "glance-basic",
+  "title": "+glance — live demo",
+  "description": "Compact one-line scan of room occupants: name + idle + short-desc.",
+  "vars": { "player": "Diablerie" },
+  "setup": {
+    "character": {
+      "state": {
+        "attributes": [{ "name": "short-desc", "value": "Tall figure in a worn leather jacket." }]
+      }
+    },
+    "targets": {
+      "Bartender": {
+        "flags": ["player", "connected"],
+        "state": {
+          "attributes": [{ "name": "short-desc", "value": "Wiping down the counter, distracted." }]
+        }
+      }
+    },
+    "room": { "name": "The Afterlife" }
+  },
+  "steps": [
+    { "sub": "Multi-Occupant Glance" },
+    { "note": "+glance lists everyone connected in the room with their idle + short-desc, no description or exits." },
+    { "cmd": "+glance" },
+    { "expect": "At a glance" },
+    { "expect": "Diablerie" },
+    { "expect": "leather jacket" },
+    { "expect": "Bartender" },
+    { "expect": "Wiping" },
+
+    { "reset": true }
+  ]
+}

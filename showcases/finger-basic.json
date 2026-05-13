@@ -1,0 +1,66 @@
+{
+  "key": "finger-basic",
+  "title": "+finger — live demo",
+  "description": "Tour of the +finger character profile surface: viewing, setting fields, clearing, hiding, and miss handling.",
+  "vars": {
+    "self": "Tester",
+    "other": "Alice"
+  },
+  "setup": {
+    "targets": {
+      "Alice": {
+        "flags": ["player"],
+        "data": {
+          "name": "Alice",
+          "alias": "Ally",
+          "pronouns": "she/her",
+          "position": "Bartender at the Velvet Lounge"
+        }
+      }
+    }
+  },
+  "steps": [
+    { "sub": "Viewing Your Own Finger" },
+    { "note": "+finger with no argument shows the caller's own profile. Default fields appear in a fixed order even when empty so the layout reads cleanly." },
+    { "cmd": "+finger", "label": "your own profile" },
+    { "expect": "Full Name" },
+    { "expect": "Status" },
+
+    { "sub": "Viewing Another Player" },
+    { "note": "Pass a name to look someone else up. The lookup matches on character name first, then alias." },
+    { "cmd": "+finger {{other}}", "label": "look up Alice" },
+    { "expect": "Full Name" },
+
+    { "sub": "Setting a Field" },
+    { "note": "+finger/set <field>=<value> stores arbitrary fields. Underscores and casing in field names are normalised." },
+    { "cmd": "+finger/set alias=Al", "label": "set your alias" },
+    { "expect": "Alias set to:" },
+    { "cmd": "+finger", "label": "alias now shows in the profile" },
+    { "expect": "Al" },
+
+    { "sub": "Custom Fields" },
+    { "note": "Any field name works. Custom fields appear after the defaults, sorted alphabetically." },
+    { "cmd": "+finger/set theme song=Ride of the Valkyries" },
+    { "expect": "Theme Song set to:" },
+    { "cmd": "+finger" },
+    { "expect": "Theme Song" },
+
+    { "sub": "Clearing a Field" },
+    { "note": "An empty value on the right of the = removes the field entirely." },
+    { "cmd": "+finger/set theme song=" },
+    { "expect": "Theme Song cleared" },
+
+    { "sub": "Hiding a Default Field" },
+    { "note": "Setting a value to @@ hides the field from display without forgetting it. Useful when you want a default field suppressed rather than blank." },
+    { "cmd": "+finger/set pronouns=@@" },
+    { "expect": "Pronouns is now hidden" },
+    { "cmd": "+finger" },
+
+    { "sub": "Looking Up a Missing Player" },
+    { "note": "If no player or alias matches, the command tells you so plainly." },
+    { "cmd": "+finger Nobody" },
+    { "expect": "No character found matching" },
+
+    { "reset": true }
+  ]
+}

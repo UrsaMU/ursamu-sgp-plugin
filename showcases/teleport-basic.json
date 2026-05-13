@@ -1,0 +1,36 @@
+{
+  "key": "teleport-basic",
+  "title": "+summon / +rsummon / +join / +rjoin — live demo",
+  "description": "Staff teleport convenience set: each pair remembers an origin so you can bounce back.",
+  "vars": { "player": "Player" },
+  "setup": {
+    "targets": {
+      "Alice": { "flags": ["player", "connected"], "location": "elsewhere-room" }
+    }
+  },
+  "steps": [
+    { "sub": "+summon: pull a player here" },
+    { "cmd": "+summon Alice", "as": "admin" },
+    { "expect": "Summoned Alice" },
+
+    { "sub": "+rsummon: send them back" },
+    { "cmd": "+rsummon Alice", "as": "admin" },
+    { "expect": "Returned Alice" },
+
+    { "sub": "+join: go to them" },
+    { "cmd": "+join Alice", "as": "admin" },
+    { "expect": "Joined Alice" },
+
+    { "sub": "+rjoin: come back" },
+    { "cmd": "+rjoin", "as": "admin" },
+    { "expect": "Returned to your previous" },
+
+    { "sub": "Refusals" },
+    { "cmd": "+rjoin", "as": "admin", "label": "no origin recorded" },
+    { "expect": "no join origin" },
+    { "cmd": "+summon NoSuchPlayer", "as": "admin" },
+    { "expect": "No one found" },
+
+    { "reset": true }
+  ]
+}

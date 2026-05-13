@@ -1,39 +1,28 @@
-# PAGE
+PAGE
 
-Send a private message to another player.
+Send a private message to another connected player.
 
-## Syntax
+SYNTAX
+  page <player>=<message>     Send a normal page.
+  page <player>=:<pose>       Send a pose page.
 
-`page <player>=<message>` `p <player>=<message>`
+EXAMPLES
+  page Bob=Are you busy?
+  page Bob=:waves hello.
 
-`page <player>=:<pose>` — send a pose page
+NOTES
+  Output uses Rhost styling:
 
-## Description
+    Jupiter(J) pages: Hello there!
+    You paged Jupiter with 'Hello there!'.
 
-Sends a private message regardless of location. The target must be connected
-and not dark.
+  Pose form:
 
-**Normal page:**
+    From afar, Jupiter(J) waves.
+    Long distance to Jupiter: Jupiter waves.
 
-```
-Jupiter(J) pages: Hello there!
-You paged Jupiter with 'Hello there!'.
-```
+  Sender's &alias appears in parens after their name. @moniker is
+  rendered verbatim if set; otherwise &name_color colors the first
+  letter. Target must be connected and not dark.
 
-**Pose page** (prefix with `:`):
-
-```
-From afar, Jupiter(J) waves to you.
-Long distance to Jupiter: Jupiter waves to you.
-```
-
-The sender's alias (set with `&alias me=<letter>`) appears in parentheses.
-
-## Related
-
-`help +finger` `help say` `help pose`
-
-## Example
-
-`page Bob=Are you busy?`
-`page Bob=:waves hello.`
+SEE ALSO: help +finger, help ooc

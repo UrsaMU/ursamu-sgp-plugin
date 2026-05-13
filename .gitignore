@@ -1,0 +1,6 @@
+data/
+logs/
+config/local.json
+.env
+coverage/
+.DS_Store

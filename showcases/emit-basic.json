@@ -1,0 +1,28 @@
+{
+  "key": "emit-basic",
+  "title": "@emit — live demo",
+  "description": "Staff-only verbatim room broadcast with no speaker prefix.",
+  "vars": {
+    "player": "Tester"
+  },
+  "steps": [
+    { "sub": "Why @emit Exists" },
+    { "note": "Pose and say always attach the speaker's name. @emit drops the message into the room verbatim — the right tool for ambient narration, weather, off-screen action, or scene-setting beats. Restricted to staff because it is, by design, an unattributed voice." },
+
+    { "sub": "Staff Broadcast" },
+    { "cmd": "@emit The lights flicker, then steady.", "as": "admin", "label": "ambient narration" },
+    { "expect": "The lights flicker" },
+
+    { "sub": "Players Cannot Use It" },
+    { "note": "A regular player attempting @emit gets a flat permission refusal — no message reaches the room." },
+    { "cmd": "@emit I am secretly staff.", "label": "non-staff attempt" },
+    { "expect": "Permission denied." },
+
+    { "sub": "Colour Codes Pass Through" },
+    { "note": "Because @emit is verbatim, MUSH colour codes in the message render as expected — handy for evocative scene beats." },
+    { "cmd": "@emit %ch%crA cold wind blows through the room.%cn", "as": "admin" },
+    { "expect": "A cold wind blows through the room." },
+
+    { "reset": true }
+  ]
+}

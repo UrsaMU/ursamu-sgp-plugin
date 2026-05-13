@@ -1,0 +1,13 @@
+{
+  "key": "uptime-basic",
+  "title": "+uptime — live demo",
+  "description": "Themed server stats panel.",
+  "steps": [
+    { "sub": "Server Uptime Panel" },
+    { "note": "Pulls boot time and runtime via u.sys.uptime() and renders inside the standard header/footer." },
+    { "cmd": "+uptime" },
+    { "expect": "Server Uptime" },
+    { "expect": "In operation" },
+    { "reset": true }
+  ]
+}

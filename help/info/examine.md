@@ -1,29 +1,26 @@
-# EXAMINE
+EXAMINE
 
 Inspect an object's full metadata.
 
-## Syntax
+SYNTAX
+  examine                 Examine yourself.
+  examine <object>        Examine an object, room, or player.
 
-`examine <object>`
+EXAMPLES
+  examine me
+  examine here
+  examine box
 
-## Description
+NOTES
+  78-col bordered output. Shows Flags, Owner, Lock, Location (with
+  dbref), Home, and channel memberships (alias + on/off state), then
+  a Description block, then all non-system attributes with values
+  uppercased.
 
-Shows detailed information about an object. You must own the object or it must
-have the `visual` flag set.
+  If the target has players in its contents, a "Characters" section
+  lists them.
 
-Output includes:
+  You must own the target OR it must carry the VISUAL flag. The
+  password attribute is never shown.
 
-- Flags, owner, lock
-- Location and home room (with DBREF)
-- Channel memberships
-- Full description
-- All non-system attributes with their values
-- Characters present in the object's contents
-
-## Related
-
-`help look` `help @set` `help @describe`
-
-## Example
-
-`examine me` `examine here` `examine box`
+SEE ALSO: help look, help @set, help @describe

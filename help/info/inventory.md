@@ -1,20 +1,22 @@
-# INVENTORY
+INVENTORY
 
 List everything you are carrying.
 
-## Syntax
+SYNTAX
+  inventory
+  i
 
-`inventory` `i`
+EXAMPLES
+  inventory             Show your items.
+  i                     Same, short form.
 
-## Description
+NOTES
+  78-col bordered output. Each item shows its name (bright white) and
+  &short-desc (if set), truncated so the line stays within the display
+  width. Players, exits, and rooms in your contents are excluded.
+  Footer shows the total item count.
 
-Shows all objects in your inventory with their `&short-desc` (if set) and a
-total item count at the bottom. Players, exits, and rooms are excluded.
+PLAYER ATTRIBUTES
+  &short-desc <item>=<text>     Inline blurb next to the item name.
 
-## Related
-
-`help look` `help score` `help @drop` `help @get`
-
-## Example
-
-`inventory`
+SEE ALSO: help look, help score, help examine

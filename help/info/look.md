@@ -1,41 +1,26 @@
-# LOOK
+LOOK
 
-Examine the current room or a specific object.
+Examine the current room or an object in Rhost-style layout.
 
-## Syntax
+SYNTAX
+  look                Show the current room.
+  look <object>       Show a specific object, exit, or player.
 
-`look` `look <object>`
+EXAMPLES
+  look                See your current location.
+  look Alice          See Alice's description.
 
-## Description
+NOTES
+  Room display is 78 cols with a centered "=====" header showing the
+  room name (plus grid_area in cyan if set). Players row shows name
+  (@moniker rendered verbatim), a role-tag column for staff
+  (Wizard/Root/Admin/Staff, from theme.look.roleTags), color-coded
+  idle time, and &short-desc.
 
-Shows the room name, description, players, contents, and exits of your current
-location. If an object name is given, shows that object's description instead.
+  Exits group into sections by their TYPE attribute — set with
+  &type <exit>=<value> (or @exittype). Cardinal exits auto-classify as
+  "direction"; others default to "exit". Sections render alphabetically
+  in 3 columns. Each exit shows "<alias> Name" using the FIRST declared
+  alias from the name;alias list.
 
-**Players** section lists everyone in the room with idle-time color coding and
-their `&short-desc` (if set).
-
-- Green: idle less than 5 minutes
-- Normal: idle 5–14 minutes
-- Dark gray: idle 15+ minutes
-
-**Exits** are split into two groups:
-
-- *Locations* — named destinations (e.g. "Market", "Inn")
-- *Directions* — compass words (north, south, ne, up, in, …)
-
-Exit aliases appear in parentheses: `Market (m)`
-
-When you look at an object (not a room), the room sees your `ODESC` message
-if one is set on that object.
-
-## Player attributes
-
-`&short-desc me=<text>` — description shown next to your name in rooms
-
-## Related
-
-`help score` `help inventory` `help examine`
-
-## Example
-
-`look` `look box` `look north`
+SEE ALSO: help score, help inventory, help examine, help @exittype

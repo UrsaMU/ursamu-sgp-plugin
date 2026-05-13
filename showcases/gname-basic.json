@@ -1,0 +1,44 @@
+{
+  "key": "gname-basic",
+  "title": "+gname — live demo",
+  "description": "Gradient @moniker: blend a list of color stops across the letters of your name. HSL with shortest-arc hue. CSS + xterm names and #hex all supported.",
+  "vars": { "player": "Diablerie" },
+  "steps": [
+    { "sub": "Two-Stop Gradient" },
+    { "note": "Pass two or more color names. They blend in HSL across the letters of your name; whitespace passes through uncolored." },
+    { "cmd": "+gname gold red", "label": "yellow-to-red" },
+    { "expect": "Moniker set" },
+
+    { "sub": "Three-Stop Gradient" },
+    { "note": "Any number of stops is fine. Stops anchor at the endpoints; intermediate stops sit at evenly-spaced positions." },
+    { "cmd": "+gname red blue green", "label": "rainbow-ish" },
+    { "expect": "Moniker set" },
+
+    { "sub": "CSS Named Colors" },
+    { "note": "147 CSS named colors are baked in. Try the fancy ones." },
+    { "cmd": "+gname crimson mediumseagreen papayawhip" },
+    { "expect": "Moniker set" },
+
+    { "sub": "Hex Literals" },
+    { "note": "Pass any #rrggbb literal — leading # is optional." },
+    { "cmd": "+gname #ff00aa #00ffff" },
+    { "expect": "Moniker set" },
+
+    { "sub": "Inspecting Current" },
+    { "note": "No argument shows the current moniker preview." },
+    { "cmd": "+gname" },
+    { "expect": "Current moniker" },
+
+    { "sub": "Resetting" },
+    { "note": "reset (or clear) drops the moniker; the plain name comes back." },
+    { "cmd": "+gname reset" },
+    { "expect": "Moniker cleared" },
+
+    { "sub": "Refusing Unknown Colors" },
+    { "note": "Unknown stops are rejected wholesale — the moniker isn't partially updated." },
+    { "cmd": "+gname red glorbnax" },
+    { "expect": "not recognized" },
+
+    { "reset": true }
+  ]
+}

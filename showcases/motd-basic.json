@@ -1,0 +1,44 @@
+{
+  "key": "motd-basic",
+  "title": "+motd — live demo",
+  "description": "Game-wide Message of the Day with general + staff scopes. Numbered list per scope. Admin+ to modify; everyone can view (staff-only entries hidden from players).",
+  "vars": { "player": "Player" },
+  "steps": [
+    { "sub": "Empty State" },
+    { "cmd": "+motd", "as": "admin" },
+    { "expect": "Message of the Day" },
+    { "expect": "No general MOTD set." },
+
+    { "sub": "Adding Entries" },
+    { "cmd": "+motd/set general=Server reboot Sunday at 02:00 UTC.", "as": "admin" },
+    { "expect": "Added entry to general" },
+    { "cmd": "+motd/set general=New theme files in development; report breakage.", "as": "admin" },
+    { "expect": "Added entry to general" },
+    { "cmd": "+motd/set wizard=Watch new player Alice for cheating.", "as": "admin" },
+    { "expect": "Added entry to wizard" },
+
+    { "sub": "Viewing As Admin (sees both scopes)" },
+    { "cmd": "+motd", "as": "admin" },
+    { "expect": "Server reboot" },
+    { "expect": "Watch new player" },
+    { "expect": "Staff Notes" },
+
+    { "sub": "Viewing As Regular Player (general only)" },
+    { "cmd": "+motd" },
+    { "expect": "Server reboot" },
+
+    { "sub": "Deleting An Entry" },
+    { "cmd": "+motd/del general=1", "as": "admin" },
+    { "expect": "Removed entry #1" },
+
+    { "sub": "Resetting A Scope" },
+    { "cmd": "+motd/reset wizard", "as": "admin" },
+    { "expect": "Wiped 1 entry from wizard" },
+
+    { "sub": "Player Modification Refused" },
+    { "cmd": "+motd/set general=Sneaky.", "label": "non-admin attempt" },
+    { "expect": "Only staff" },
+
+    { "reset": true }
+  ]
+}

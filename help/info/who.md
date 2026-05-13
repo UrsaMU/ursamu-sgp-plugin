@@ -1,32 +1,22 @@
-# WHO
+WHO
 
-List all connected players.
+List all connected (non-dark) players in Rhost-style columns.
 
-## Syntax
+SYNTAX
+  who
 
-`who`
+EXAMPLES
+  who                 List everyone online.
 
-## Description
+NOTES
+  Columns: Player Name | On For | Idle | Doing. Sorted by most recent
+  login first. @moniker is rendered verbatim if set; otherwise the
+  first letter is colored from &name_color (staff color), rest in
+  bright white.
 
-Shows every connected (non-dark) player sorted by most recent login.
+  On For shows HH:MM, or "Xd HH:MM" past 24 hours. Idle uses s/m/h/d.
+  Doing is the player's @doing message.
 
-| Column      | Description                              |
-|-------------|------------------------------------------|
-| Player Name | Display name or moniker                  |
-| On For      | Total time connected (HH:MM or Xd HH:MM) |
-| Idle        | Time since last command (color-coded)    |
-| Doing       | Player's `@doing` message                |
+  Dark players are hidden. Footer shows the total count.
 
-Idle color coding:
-
-- Green: idle less than 5 minutes
-- Normal: idle 5–14 minutes
-- Dark gray: idle 15+ minutes
-
-## Related
-
-`help +where` `help +staff` `@doing <text>` — set your Doing message
-
-## Example
-
-`who`
+SEE ALSO: help +where, help +staff, help +finger

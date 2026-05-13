@@ -1,0 +1,31 @@
+{
+  "key": "duty-basic",
+  "title": "+duty — live demo",
+  "description": "Staff on/off-duty toggle. Off-duty staff stay connected but disappear from the +staff online roster.",
+  "vars": { "player": "Player" },
+  "steps": [
+    { "sub": "On-Duty (default) — visible to +staff" },
+    { "cmd": "+staff", "as": "admin" },
+    { "expect": "Admin" },
+
+    { "sub": "Toggle Off-Duty" },
+    { "cmd": "+duty", "as": "admin" },
+    { "expect": "off-duty" },
+
+    { "sub": "Now Hidden From +staff" },
+    { "cmd": "+staff", "as": "admin" },
+    { "expect": "No staff are currently online." },
+
+    { "sub": "Toggle Back" },
+    { "cmd": "+duty", "as": "admin" },
+    { "expect": "on-duty" },
+    { "cmd": "+staff", "as": "admin" },
+    { "expect": "Admin" },
+
+    { "sub": "Non-Staff Refusal" },
+    { "cmd": "+duty" },
+    { "expect": "Only staff" },
+
+    { "reset": true }
+  ]
+}

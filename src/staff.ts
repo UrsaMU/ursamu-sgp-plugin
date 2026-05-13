@@ -1,5 +1,5 @@
-import { addCmd } from "../../services/commands/cmdParser.ts";
-import type { IUrsamuSDK, IDBObj } from "../../@types/UrsamuSDK.ts";
+import { addCmd } from "@ursamu/ursamu";
+import type { IUrsamuSDK, IDBObj } from "@ursamu/ursamu";
 import { header, footer, divider, padLeft, padRight } from "./layout.ts";
 import { defaultTheme, customTheme } from "./theme.ts";
 
@@ -75,6 +75,7 @@ export function registerStaffCommands(): void {
         (p) =>
           p.flags.has("player") &&
           !p.flags.has("dark") &&
+          !(p as unknown as { data?: { offduty?: boolean } }).data?.offduty &&
           (p.flags.has("admin") || p.flags.has("wizard") || p.flags.has("superuser")),
       );
 
@@ -88,14 +89,14 @@ export function registerStaffCommands(): void {
       const doingW = t.width - NW - OW - IW - 8;
 
       const lines: string[] = [];
-      lines.push(header("Staff Online", t));
+      lines.push(await header("Staff Online", t));
       lines.push(
         padLeft(c.label + "Player Name" + c.reset, NW) + "  " +
         padRight(c.label + "On For" + c.reset, OW)    + "  " +
         padRight(c.label + "Idle"   + c.reset, IW)    + "  " +
         c.label + "Doing" + c.reset,
       );
-      lines.push(divider(null, t));
+      lines.push(await divider(null, t));
 
       if (staff.length === 0) {
         lines.push("  No staff are currently online.");
@@ -111,9 +112,9 @@ export function registerStaffCommands(): void {
         }
       }
 
-      lines.push(divider(null, t));
+      lines.push(await divider(null, t));
       lines.push(`  ${staff.length} staff member${staff.length === 1 ? "" : "s"} online.`);
-      lines.push(footer(t));
+      lines.push(await footer(t));
       u.send(lines.join("\n"));
 
       u.ui.layout({

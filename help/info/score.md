@@ -1,27 +1,24 @@
-# SCORE
+SCORE
 
 View your character scorecard.
 
-## Syntax
+SYNTAX
+  score
 
-`score`
+EXAMPLES
+  score                See your stats.
 
-## Description
+NOTES
+  78-col bordered output. Fields shown: DBRef, Alias, Money (credits),
+  Flags (sans "connected"), and &short-desc (if set), then a divider,
+  then your Doing message.
 
-Displays your personal stats: DBREF, alias, money, flags, short description,
-and doing message.
+  If &SCORE-EXTRA is set on you, its contents render below a "Stats"
+  section divider — useful for game-specific stat blocks rendered via
+  softcode.
 
-If you have set `SCORE-EXTRA` on yourself, its contents appear below a "Stats"
-divider — useful for softcoded stat displays.
+PLAYER ATTRIBUTES
+  &score-extra me=<text>     Extra block appended under "Stats".
+  &short-desc me=<text>      Short description shown on score/look.
 
-## Player attributes
-
-`&score-extra me=<text>` — extra text appended to your score output
-
-## Related
-
-`help look` `help inventory` `help +finger`
-
-## Example
-
-`score`
+SEE ALSO: help look, help inventory, help +finger

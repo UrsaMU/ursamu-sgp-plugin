@@ -1,20 +1,11 @@
-# +STAFF
++STAFF
 
 List online staff members.
 
-## Syntax
+SYNTAX
+  +staff
 
-`+staff`
+EXAMPLES
+  +staff           Show connected admin, wizard, and superuser players.
 
-## Description
-
-Shows all connected admin, wizard, and superuser players in a table with name,
-On For, Idle, and Doing columns. Dark-flagged staff are not shown.
-
-## Related
-
-`help who` `help +where` `help +finger`
-
-## Example
-
-`+staff`
+SEE ALSO: who, +where, +finger, +duty

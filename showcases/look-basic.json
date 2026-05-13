@@ -1,0 +1,90 @@
+{
+  "key": "look-basic",
+  "title": "look — live demo",
+  "description": "Rhost Vision room display: left-aligned header/sections, player role tag, exits prefixed with their first alias.",
+  "vars": { "player": "Diablerie" },
+  "setup": {
+    "character": {
+      "flags": ["admin"],
+      "state": {
+        "moniker": "%ch%cr<%cn%ch%cyD%cn%ch%criablerie%cn%ch%cr>%cn",
+        "description": "A tall figure in a worn leather jacket, eyes scanning the room. Faded street tats run down both arms; a chrome neural port glints at the temple.",
+        "attributes": [
+          { "name": "short-desc", "value": "Some awesome dude!" }
+        ]
+      },
+      "carrying": ["Smartlink Pistol", "Cred Stick", "Worn Notebook"]
+    },
+    "targets": {
+      "Strongbox": {
+        "flags": [],
+        "state": {
+          "name": "Strongbox",
+          "description": "A battered steel strongbox bolted to the floor. The dial is worn smooth from use.",
+          "location": "mock-room"
+        }
+      }
+    },
+    "room": {
+      "name": "The Void",
+      "description": "A featureless void, stretching endlessly in all directions.",
+      "exits": [
+        { "name": "Another Room",     "type": "location"  },
+        { "name": "Market;m;shop",    "type": "location", "description": "A bustling open-air market — vendors hawking everything from fresh fruit to questionable chrome." },
+        { "name": "Inn;i",            "type": "location"  },
+        { "name": "Garden;g",         "type": "location"  },
+        { "name": "north;n",          "type": "direction" },
+        { "name": "south;s",          "type": "direction" },
+        { "name": "east;e",           "type": "direction" },
+        { "name": "Secret Hatch;h",   "type": "hidden", "description": "A grated steel hatch flush with the floor, almost invisible under the dust." },
+        { "name": "Astral Plane;ap",  "type": "portal"    }
+      ]
+    }
+  },
+  "steps": [
+    { "sub": "Standard Room View" },
+    { "note": "Left-aligned header (===== Title …===), player row with role tag + idle + short-desc, exits in their own section. Exits named `Name;alias0;…` render as `<alias0> Name`. Exit sections are derived from each exit's TYPE attribute (set in-game via `&type <exit>=<value>` or `@exittype`), sorted alphabetically. Untagged + cardinal exits auto-classify as `direction`; untagged + non-cardinal default to `exit`." },
+    { "disconnect": "Admin" },
+    { "cmd": "look" },
+    { "expect": "The Void" },
+    { "expect": "Diablerie" },
+    { "expect": "(Admin)" },
+    { "expect": "Some awesome dude!" },
+    { "expect": "Directions" },
+    { "expect": "north" },
+    { "expect": "Hiddens" },
+    { "expect": "<h> Secret Hatch" },
+    { "expect": "Locations" },
+    { "expect": "Another Room" },
+    { "expect": "<m> Market" },
+    { "expect": "Portals" },
+    { "expect": "<ap> Astral Plane" },
+
+    { "sub": "Looking At A Player" },
+    { "note": "look <name> on a player shows their styled card: moniker + role tag, short-desc, full description, and idle." },
+    { "cmd": "look Diablerie" },
+    { "expect": "Diablerie" },
+    { "expect": "(Admin)" },
+    { "expect": "Some awesome dude!" },
+    { "expect": "leather jacket" },
+    { "expect": "Carrying" },
+    { "expect": "Smartlink Pistol" },
+
+    { "sub": "Looking At An Exit" },
+    { "note": "look <exit> resolves by name or alias (alias[0] match works). The card shows the exit's description and its TYPE." },
+    { "cmd": "look Market" },
+    { "expect": "Market" },
+    { "expect": "bustling open-air market" },
+    { "cmd": "look h", "label": "by alias" },
+    { "expect": "Secret Hatch" },
+    { "expect": "grated steel hatch" },
+
+    { "sub": "Looking At An Object" },
+    { "note": "Non-room, non-player, non-exit targets render with header + description + contents (when not opaque)." },
+    { "cmd": "look Strongbox" },
+    { "expect": "Strongbox" },
+    { "expect": "bolted to the floor" },
+
+    { "reset": true }
+  ]
+}

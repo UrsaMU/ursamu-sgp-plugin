@@ -1,0 +1,32 @@
+{
+  "key": "inv-basic",
+  "title": "+i / +inv — live demo",
+  "description": "See what another player is carrying. Same-room visible to anyone; staff bypass same-room and see opaque/dark items.",
+  "vars": { "player": "Diablerie" },
+  "setup": {
+    "targets": {
+      "Alice": {
+        "flags": ["player", "connected"],
+        "data": { "name": "Alice" }
+      }
+    },
+    "room": { "name": "Workshop" }
+  },
+  "steps": [
+    { "sub": "Looking At Someone Here" },
+    { "note": "+i lists the visible items on a player in the same room. With nothing carried, you get a brief empty-state." },
+    { "cmd": "+i Alice" },
+    { "expect": "Carried by Alice" },
+    { "expect": "Nothing." },
+
+    { "sub": "Missing Target" },
+    { "cmd": "+i NoSuchPlayer" },
+    { "expect": "No one found" },
+
+    { "sub": "Usage" },
+    { "cmd": "+i" },
+    { "expect": "Usage" },
+
+    { "reset": true }
+  ]
+}

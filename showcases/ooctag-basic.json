@@ -1,0 +1,41 @@
+{
+  "key": "ooctag-basic",
+  "title": "+ooctag — live demo",
+  "description": "Personal OOC tag override: each player can set their own literal tag string (decoration + MUSH color codes included). Admins own the default in theme.ooc.tag.",
+  "vars": { "speaker": "Tester" },
+  "steps": [
+    { "sub": "View Current Tag" },
+    { "note": "With no argument, +ooctag shows the effective tag and whether it's from your personal override or the theme default." },
+    { "cmd": "+ooctag" },
+    { "expect": "theme default" },
+    { "expect": "OOC" },
+
+    { "sub": "Default Tag In Use" },
+    { "note": "ooc messages use the admin's theme tag when no personal override is set." },
+    { "cmd": "ooc Hello world!" },
+    { "expect": "OOC" },
+
+    { "sub": "Setting A Personal Tag" },
+    { "note": "Pass a full literal — brackets, color codes, anything. It renders verbatim." },
+    { "cmd": "+ooctag [%cyOOC%cn]" },
+    { "expect": "OOC tag set" },
+    { "cmd": "ooc Now in bright yellow brackets." },
+    { "expect": "Now in bright yellow brackets." },
+
+    { "sub": "Different Decoration" },
+    { "note": "Use whatever shape fits your character voice." },
+    { "cmd": "+ooctag <<%crOOC%cn>>" },
+    { "expect": "OOC tag set" },
+    { "cmd": "ooc :waves" },
+    { "expect": "waves" },
+
+    { "sub": "Clearing The Override" },
+    { "note": "reset (or clear) drops you back to the theme default." },
+    { "cmd": "+ooctag reset" },
+    { "expect": "OOC tag cleared" },
+    { "cmd": "ooc Back to theme default." },
+    { "expect": "Back to theme default." },
+
+    { "reset": true }
+  ]
+}

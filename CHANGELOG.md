@@ -12,6 +12,41 @@ _Nothing yet._
 
 ---
 
+## [1.2.0] — 2026-05-09
+
+### Changed (modernisation — matches current UrsaMU plugin standards)
+
+- Restructured into the canonical plugin layout: `src/` for native command
+  modules, `scripts/` for system-script overrides, `mod.ts` for the JSR
+  module surface, root `index.ts` as a thin re-export.
+- Native command imports moved from internal relative paths
+  (`../../services/...`, `../../@types/...`) to the JSR package
+  `@ursamu/ursamu`. Plugin can now be installed and developed as a
+  standalone repo without symlinking into the engine source tree.
+- `addCmd()` registrations now fire at module load via `src/commands.ts`
+  (Phase 1) instead of inside `init()`. `init()` is now reserved for
+  filesystem work (script copy / backup).
+- `@emit` is now a real `addCmd` registration (it was previously dead code
+  shaped like a system script).
+
+### Added
+
+- `deno.json` with `test`, `lint`, and `check` tasks; JSR imports pinned to
+  `@ursamu/ursamu@^2.2`.
+- `mod.ts` exporting the plugin, theme, layout helpers, and `coloredName()`
+  for downstream plugins.
+- `LICENSE` (MIT), `.gitignore`, `CLAUDE.md` (plugin authoring guide
+  matching the help-plugin reference), and `README.md`.
+- Help files for previously undocumented commands: `ooc`, `+ooccolor`,
+  `+ooccolor2`, `+namecolor`, `@emit`, `@mail`.
+- `tests/layout.test.ts` covering the pure layout utilities.
+
+### Compatibility
+
+- Bumped engine requirement to `>=2.2.0` (JSR `@ursamu/ursamu@^2.2`).
+
+---
+
 ## [1.1.0] — 2026-03-21
 
 ### Added
