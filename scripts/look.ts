@@ -122,6 +122,7 @@ function formatIdle(lastCommand: number | undefined): string {
 }
 
 const SHORTDESC_PROMPT = "%ch%cxUse '&short-desc me=<desc>' to set.%cn";
+const NO_DESCRIPTION   = "You don't see anything special.";
 
 interface IAttr {
   name?: string;
@@ -236,35 +237,20 @@ async function renderPlayer(p: IDBObj): Promise<string> {
   lines.push(await headerLine(title));
   lines.push("");
 
-  if (SHOW_SHORTDESC) {
-    const short = getShortDesc(p) || SHORTDESC_PROMPT;
-    lines.push(` ${short}`);
-    lines.push("");
-  }
-
-  const desc = (p.state?.description as string) || "";
-  if (desc) {
-    for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
-    lines.push("");
-  }
+  const desc = (p.state?.description as string) || NO_DESCRIPTION;
+  for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
 
   // Carrying — visible items in their contents (skip opaque/dark to honor privacy)
   const carried = (p.contents ?? []).filter(
     (o: IDBObj) => !o.flags.has("dark") && !o.flags.has("opaque"),
   );
   if (carried.length > 0) {
+    lines.push("");
     lines.push(await sectionLine("Carrying"));
     const names = carried.map((o: IDBObj) => (o.state?.name as string) || o.name || "(unknown)");
     const shown = names.slice(0, 5);
     if (names.length > 5) shown.push(`... and ${names.length - 5} more`);
     lines.push(` ${shown.join(", ")}`);
-  }
-
-  if (SHOW_IDLE) {
-    const isConnected = p.flags.has("connected");
-    const idle  = isConnected ? formatIdle(p.state?.lastCommand as number) : "%cxOffline%cn";
-    if (carried.length === 0) lines.push("");
-    lines.push(` Idle: ${idle}`);
   }
   lines.push("");
   lines.push(await footerLine());
@@ -281,10 +267,8 @@ async function renderExit(e: IDBObj, canEdit: boolean): Promise<string> {
   lines.push(await headerLine(title));
   lines.push("");
 
-  const desc = (e.state?.description as string) || "";
-  if (desc) {
-    for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
-  }
+  const desc = (e.state?.description as string) || NO_DESCRIPTION;
+  for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
 
   // Show destination to anyone who can edit the exit (typically staff or owner).
   if (canEdit && e.state?.destination) {
@@ -302,7 +286,7 @@ async function renderObject(o: IDBObj, showContents: boolean): Promise<string> {
   lines.push(await headerLine(title));
   lines.push("");
 
-  const desc = (o.state?.description as string) || "You see nothing special.";
+  const desc = (o.state?.description as string) || NO_DESCRIPTION;
   for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
 
   if (showContents && o.contents && o.contents.length > 0) {
