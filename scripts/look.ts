@@ -17,14 +17,19 @@ const CARDINAL = new Set([
   "up", "down", "u", "d",
 ]);
 
-// Centered border line: matches theme's headerfmt/dividerfmt styling.
-//   centerBorderLine("Title", "=", 78)  →  "=================== Title ===================="
+// Replaced at install time from theme.colors / theme.tokens so the look
+// script's borders match the rest of globals (header/divider/footer).
+const BORDER_COLOR = /* {{BORDER_COLOR}} */ "%ch%cw";
+const TITLE_COLOR  = /* {{TITLE_COLOR}}  */ "%ch%cw";
+const RESET_COLOR  = /* {{RESET_COLOR}}  */ "%cn";
+
+// Centered border line: <border>=====<reset> <title>Text<reset> <border>=====<reset>
 function centerBorderLine(text: string, char: string, width: number): string {
-  const middle = ` ${text} `;
+  const middle = ` ${TITLE_COLOR}${text}${RESET_COLOR} `;
   const pad    = Math.max(0, width - visualLen(middle));
   const left   = Math.floor(pad / 2);
   const right  = pad - left;
-  return char.repeat(left) + middle + char.repeat(right);
+  return `${BORDER_COLOR}${char.repeat(left)}${RESET_COLOR}${middle}${BORDER_COLOR}${char.repeat(right)}${RESET_COLOR}`;
 }
 
 function headerLine(text: string): string {
@@ -36,7 +41,7 @@ function sectionLine(text: string): string {
 }
 
 function footerLine(): string {
-  return "=".repeat(WIDTH);
+  return `${BORDER_COLOR}${"=".repeat(WIDTH)}${RESET_COLOR}`;
 }
 
 /** Measure visual width, stripping color codes (MUSH %c* and inline <#rrggbb>). */

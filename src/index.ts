@@ -48,6 +48,18 @@ const SCRIPT_TRANSFORMS: Record<string, (src: string) => string> = {
       .replace(
         /\/\*\s*\{\{ALIAS_CASE\}\}\s*\*\/\s*"(?:upper|lower|preserve)";/m,
         `/* {{ALIAS_CASE}} */ "${look.aliasCase}";`,
+      )
+      .replace(
+        /\/\*\s*\{\{BORDER_COLOR\}\}\s*\*\/\s*"[^"]*";/m,
+        `/* {{BORDER_COLOR}} */ ${JSON.stringify(currentTheme().colors.border)};`,
+      )
+      .replace(
+        /\/\*\s*\{\{TITLE_COLOR\}\}\s*\*\/\s*"[^"]*";/m,
+        `/* {{TITLE_COLOR}}  */ ${JSON.stringify(currentTheme().tokens.title)};`,
+      )
+      .replace(
+        /\/\*\s*\{\{RESET_COLOR\}\}\s*\*\/\s*"[^"]*";/m,
+        `/* {{RESET_COLOR}}  */ ${JSON.stringify(currentTheme().colors.reset)};`,
       );
   },
 };
