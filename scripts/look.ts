@@ -240,14 +240,28 @@ async function renderPlayer(p: IDBObj): Promise<string> {
   const desc = (p.state?.description as string) || NO_DESCRIPTION;
   for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
 
-  // Carrying — visible items in their contents (skip opaque/dark to honor privacy)
-  const carried = (p.contents ?? []).filter(
+  // Held contents — skip dark/opaque to honor privacy. Split into held
+  // players vs carried things; the things section uses the "Carrying" label.
+  const visible = (p.contents ?? []).filter(
     (o: IDBObj) => !o.flags.has("dark") && !o.flags.has("opaque"),
   );
-  if (carried.length > 0) {
+  const heldPlayers = visible.filter((o: IDBObj) => o.flags.has("player"));
+  const heldThings  = visible.filter((o: IDBObj) => !o.flags.has("player") && !o.flags.has("exit"));
+
+  if (heldPlayers.length > 0) {
+    lines.push("");
+    lines.push(await sectionLine("Players"));
+    for (const c of heldPlayers) {
+      const cName = coloredName(c);
+      const role  = roleTag(c);
+      lines.push(role ? ` ${cName} ${role}` : ` ${cName}`);
+    }
+  }
+
+  if (heldThings.length > 0) {
     lines.push("");
     lines.push(await sectionLine("Carrying"));
-    const names = carried.map((o: IDBObj) => (o.state?.name as string) || o.name || "(unknown)");
+    const names = heldThings.map((o: IDBObj) => (o.state?.name as string) || o.name || "(unknown)");
     const shown = names.slice(0, 5);
     if (names.length > 5) shown.push(`... and ${names.length - 5} more`);
     lines.push(` ${shown.join(", ")}`);
@@ -290,10 +304,25 @@ async function renderObject(o: IDBObj, showContents: boolean): Promise<string> {
   for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
 
   if (showContents && o.contents && o.contents.length > 0) {
-    lines.push("");
-    lines.push(await sectionLine("Contents"));
-    for (const c of o.contents) {
-      lines.push(` ${(c.state?.name as string) || c.name || "(unknown)"}`);
+    const heldPlayers = o.contents.filter((c: IDBObj) => c.flags.has("player"));
+    const heldThings  = o.contents.filter((c: IDBObj) => !c.flags.has("player") && !c.flags.has("exit"));
+
+    if (heldPlayers.length > 0) {
+      lines.push("");
+      lines.push(await sectionLine("Players"));
+      for (const c of heldPlayers) {
+        const cName = coloredName(c);
+        const role  = roleTag(c);
+        lines.push(role ? ` ${cName} ${role}` : ` ${cName}`);
+      }
+    }
+
+    if (heldThings.length > 0) {
+      lines.push("");
+      lines.push(await sectionLine("Contents"));
+      for (const c of heldThings) {
+        lines.push(` ${(c.state?.name as string) || c.name || "(unknown)"}`);
+      }
     }
   }
   lines.push("");
