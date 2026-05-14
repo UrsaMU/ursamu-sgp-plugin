@@ -75,6 +75,8 @@ export interface GlobalsTheme {
     showIdle:        boolean;
     categorizeExits: boolean;
     showExitAliases: boolean;
+    /** Case transform applied to exit aliases in the room view and exit cards. */
+    aliasCase:       "upper" | "lower" | "preserve";
     exitColumns:     1 | 2 | 3;
     descIndent:      number;
     /** Flag → display string. Order = priority (first match wins). Empty disables the column. */
@@ -159,6 +161,7 @@ export const DEFAULT_THEME: GlobalsTheme = {
     showIdle:        true,
     categorizeExits: true,
     showExitAliases: true,
+    aliasCase:       "preserve",
     exitColumns:     2,
     descIndent:      2,
     roleTags: [

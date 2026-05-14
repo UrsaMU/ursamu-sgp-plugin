@@ -197,7 +197,7 @@ function sectionTitle(type: string): string {
 
 function formatExitEntry(info: { name: string; alias: string }): string {
   if (info.alias && info.alias.toLowerCase() !== info.name.toLowerCase()) {
-    return `<%cc${info.alias}%cn> ${info.name}`;
+    return `<%cc${castAlias(info.alias)}%cn> ${info.name}`;
   }
   return info.name;
 }
@@ -210,9 +210,16 @@ const ROLE_TAGS: Array<{ flag: string; display: string }> = /* {{ROLE_TAGS}} */ 
   { flag: "staff",     display: "(Staff)"  },
 ];
 
-// Replaced at install time from theme.look.{showIdle,showShortDesc}.
+// Replaced at install time from theme.look.{showIdle,showShortDesc,aliasCase}.
 const SHOW_IDLE      = /* {{SHOW_IDLE}} */      true;
 const SHOW_SHORTDESC = /* {{SHOW_SHORTDESC}} */ true;
+const ALIAS_CASE: "upper" | "lower" | "preserve" = /* {{ALIAS_CASE}} */ "preserve";
+
+function castAlias(alias: string): string {
+  if (ALIAS_CASE === "upper") return alias.toUpperCase();
+  if (ALIAS_CASE === "lower") return alias.toLowerCase();
+  return alias;
+}
 
 function roleTag(obj: IDBObj): string {
   for (const t of ROLE_TAGS) if (obj.flags.has(t.flag)) return t.display;
@@ -272,7 +279,7 @@ function renderPlayer(p: IDBObj): string {
 function renderExit(e: IDBObj, canEdit: boolean): string {
   const info  = getExitInfo(e);
   const title = info.alias && info.alias.toLowerCase() !== info.name.toLowerCase()
-    ? `${info.name} <%cc${info.alias}%cn>`
+    ? `${info.name} <%cc${castAlias(info.alias)}%cn>`
     : info.name;
 
   const lines: string[] = [];

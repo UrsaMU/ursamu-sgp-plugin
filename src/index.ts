@@ -44,6 +44,10 @@ const SCRIPT_TRANSFORMS: Record<string, (src: string) => string> = {
       .replace(
         /\/\*\s*\{\{SHOW_SHORTDESC\}\}\s*\*\/\s*(?:true|false);/m,
         `/* {{SHOW_SHORTDESC}} */ ${look.showShortDesc};`,
+      )
+      .replace(
+        /\/\*\s*\{\{ALIAS_CASE\}\}\s*\*\/\s*"(?:upper|lower|preserve)";/m,
+        `/* {{ALIAS_CASE}} */ "${look.aliasCase}";`,
       );
   },
 };
