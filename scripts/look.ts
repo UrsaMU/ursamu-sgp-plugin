@@ -210,6 +210,10 @@ const ROLE_TAGS: Array<{ flag: string; display: string }> = /* {{ROLE_TAGS}} */ 
   { flag: "staff",     display: "(Staff)"  },
 ];
 
+// Replaced at install time from theme.look.{showIdle,showShortDesc}.
+const SHOW_IDLE      = /* {{SHOW_IDLE}} */      true;
+const SHOW_SHORTDESC = /* {{SHOW_SHORTDESC}} */ true;
+
 function roleTag(obj: IDBObj): string {
   for (const t of ROLE_TAGS) if (obj.flags.has(t.flag)) return t.display;
   return "";
@@ -228,10 +232,12 @@ function renderPlayer(p: IDBObj): string {
   lines.push(headerLine(title));
   lines.push("");
 
-  const short = getShortDesc(p);
-  if (short) {
-    lines.push(` ${short}`);
-    lines.push("");
+  if (SHOW_SHORTDESC) {
+    const short = getShortDesc(p);
+    if (short) {
+      lines.push(` ${short}`);
+      lines.push("");
+    }
   }
 
   const desc = (p.state?.description as string) || "";
@@ -252,10 +258,12 @@ function renderPlayer(p: IDBObj): string {
     lines.push(` ${shown.join(", ")}`);
   }
 
-  const isConnected = p.flags.has("connected");
-  const idle  = isConnected ? formatIdle(p.state?.lastCommand as number) : "%cxOffline%cn";
-  if (carried.length === 0) lines.push("");
-  lines.push(` Idle: ${idle}`);
+  if (SHOW_IDLE) {
+    const isConnected = p.flags.has("connected");
+    const idle  = isConnected ? formatIdle(p.state?.lastCommand as number) : "%cxOffline%cn";
+    if (carried.length === 0) lines.push("");
+    lines.push(` Idle: ${idle}`);
+  }
   lines.push("");
   lines.push(footerLine());
   return lines.join("\n");
@@ -422,16 +430,16 @@ export default async (u: IUrsamuSDK) => {
       lines.push(sectionLine("Players"));
       for (const c of characters) {
         const cName   = coloredName(c);
-        const idle    = formatIdle(c.state?.lastCommand as number);
+        const idle    = SHOW_IDLE      ? formatIdle(c.state?.lastCommand as number) : "";
         const role    = roleTag(c);
-        const desc    = getShortDesc(c);
+        const desc    = SHOW_SHORTDESC ? getShortDesc(c) : "";
 
         // Pad by *visible* width so monikers with embedded color codes line up.
         const namePad = " ".repeat(Math.max(1, 21 - visualLen(cName)));
         const rolePad = " ".repeat(Math.max(1, 13 - visualLen(role)));
-        const idlePad = " ".repeat(Math.max(1,  4 - visualLen(idle)));
+        const idlePad = SHOW_IDLE ? " ".repeat(Math.max(1, 4 - visualLen(idle))) : "";
 
-        lines.push(` ${cName}${namePad}${role}${rolePad}${idle}${idlePad}${desc}`);
+        lines.push(` ${cName}${namePad}${role}${rolePad}${idle}${idlePad}${desc}`.replace(/\s+$/, ""));
       }
     }
 

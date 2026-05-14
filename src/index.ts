@@ -30,11 +30,21 @@ import { currentTheme, DEFAULT_THEME, loadTheme } from "./theme.ts";
 // source text and returns the substituted text.
 const SCRIPT_TRANSFORMS: Record<string, (src: string) => string> = {
   "look.ts": (src) => {
-    const tags = JSON.stringify(currentTheme().look.roleTags);
-    return src.replace(
-      /\/\*\s*\{\{ROLE_TAGS\}\}\s*\*\/\s*\[[\s\S]*?\];/m,
-      `/* {{ROLE_TAGS}} */ ${tags};`,
-    );
+    const look = currentTheme().look;
+    const tags = JSON.stringify(look.roleTags);
+    return src
+      .replace(
+        /\/\*\s*\{\{ROLE_TAGS\}\}\s*\*\/\s*\[[\s\S]*?\];/m,
+        `/* {{ROLE_TAGS}} */ ${tags};`,
+      )
+      .replace(
+        /\/\*\s*\{\{SHOW_IDLE\}\}\s*\*\/\s*(?:true|false);/m,
+        `/* {{SHOW_IDLE}} */      ${look.showIdle};`,
+      )
+      .replace(
+        /\/\*\s*\{\{SHOW_SHORTDESC\}\}\s*\*\/\s*(?:true|false);/m,
+        `/* {{SHOW_SHORTDESC}} */ ${look.showShortDesc};`,
+      );
   },
 };
 
