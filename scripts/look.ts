@@ -111,14 +111,17 @@ function coloredName(obj: IDBObj): string {
 }
 
 function formatIdle(lastCommand: number | undefined): string {
-  if (!lastCommand) return "%cx??%cn";
+  if (!lastCommand) return "%ch%cx0s%cn";
   const diff = Math.floor((Date.now() - lastCommand) / 1000);
+  if (diff === 0) return "%ch%cx0s%cn";
   if (diff < 60) return `%cg${diff}s%cn`;
   if (diff < 600) return `%cg${Math.floor(diff / 60)}m%cn`;
   if (diff < 3600) return `%cy${Math.floor(diff / 60)}m%cn`;
   if (diff < 86400) return `%cy${Math.floor(diff / 3600)}h%cn`;
   return `%ch%cx${Math.floor(diff / 86400)}d%cn`;
 }
+
+const SHORTDESC_PROMPT = "%ch%cxUse '&short-desc me=<desc>' to set.%cn";
 
 interface IAttr {
   name?: string;
@@ -234,11 +237,9 @@ async function renderPlayer(p: IDBObj): Promise<string> {
   lines.push("");
 
   if (SHOW_SHORTDESC) {
-    const short = getShortDesc(p);
-    if (short) {
-      lines.push(` ${short}`);
-      lines.push("");
-    }
+    const short = getShortDesc(p) || SHORTDESC_PROMPT;
+    lines.push(` ${short}`);
+    lines.push("");
   }
 
   const desc = (p.state?.description as string) || "";
@@ -433,7 +434,7 @@ export default async (u: IUrsamuSDK) => {
         const cName   = coloredName(c);
         const idle    = SHOW_IDLE      ? formatIdle(c.state?.lastCommand as number) : "";
         const role    = roleTag(c);
-        const desc    = SHOW_SHORTDESC ? getShortDesc(c) : "";
+        const desc    = SHOW_SHORTDESC ? (getShortDesc(c) || SHORTDESC_PROMPT) : "";
 
         // Pad by *visible* width so monikers with embedded color codes line up.
         const namePad = " ".repeat(Math.max(1, 21 - visualLen(cName)));
