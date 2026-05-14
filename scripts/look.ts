@@ -1,4 +1,5 @@
 import type { IUrsamuSDK, IDBObj } from "../../@types/UrsamuSDK.ts";
+import { renderHeader, renderDivider, renderFooter } from "../src/renderer.ts";
 
 /**
  * Rhost Vision: look.ts
@@ -17,31 +18,19 @@ const CARDINAL = new Set([
   "up", "down", "u", "d",
 ]);
 
-// Replaced at install time from theme.colors / theme.tokens so the look
-// script's borders match the rest of globals (header/divider/footer).
-const BORDER_COLOR = /* {{BORDER_COLOR}} */ "%ch%cw";
-const TITLE_COLOR  = /* {{TITLE_COLOR}}  */ "%ch%cw";
-const RESET_COLOR  = /* {{RESET_COLOR}}  */ "%cn";
-
-// Centered border line: <border>=====<reset> <title>Text<reset> <border>=====<reset>
-function centerBorderLine(text: string, char: string, width: number): string {
-  const middle = ` ${TITLE_COLOR}${text}${RESET_COLOR} `;
-  const pad    = Math.max(0, width - visualLen(middle));
-  const left   = Math.floor(pad / 2);
-  const right  = pad - left;
-  return `${BORDER_COLOR}${char.repeat(left)}${RESET_COLOR}${middle}${BORDER_COLOR}${char.repeat(right)}${RESET_COLOR}`;
+// Borders/titles route through the globals renderer so look uses the same
+// themed template (headerfmt / dividerfmt / footerfmt) as every other
+// command in the package.
+function headerLine(text: string): Promise<string> {
+  return renderHeader(text, WIDTH);
 }
 
-function headerLine(text: string): string {
-  return centerBorderLine(text, "=", WIDTH);
+function sectionLine(text: string): Promise<string> {
+  return renderDivider(text, WIDTH);
 }
 
-function sectionLine(text: string): string {
-  return centerBorderLine(text, "-", WIDTH);
-}
-
-function footerLine(): string {
-  return `${BORDER_COLOR}${"=".repeat(WIDTH)}${RESET_COLOR}`;
+function footerLine(): Promise<string> {
+  return renderFooter(WIDTH);
 }
 
 /** Measure visual width, stripping color codes (MUSH %c* and inline <#rrggbb>). */
@@ -233,7 +222,7 @@ function roleTag(obj: IDBObj): string {
 
 // ─── Single-target renderers ─────────────────────────────────────────────────
 
-function renderPlayer(p: IDBObj): string {
+async function renderPlayer(p: IDBObj): Promise<string> {
   const display = coloredName(p);
   const role    = roleTag(p);
   const titleParts = [display];
@@ -241,7 +230,7 @@ function renderPlayer(p: IDBObj): string {
   const title = titleParts.join(" ");
 
   const lines: string[] = [];
-  lines.push(headerLine(title));
+  lines.push(await headerLine(title));
   lines.push("");
 
   if (SHOW_SHORTDESC) {
@@ -263,7 +252,7 @@ function renderPlayer(p: IDBObj): string {
     (o: IDBObj) => !o.flags.has("dark") && !o.flags.has("opaque"),
   );
   if (carried.length > 0) {
-    lines.push(sectionLine("Carrying"));
+    lines.push(await sectionLine("Carrying"));
     const names = carried.map((o: IDBObj) => (o.state?.name as string) || o.name || "(unknown)");
     const shown = names.slice(0, 5);
     if (names.length > 5) shown.push(`... and ${names.length - 5} more`);
@@ -277,18 +266,18 @@ function renderPlayer(p: IDBObj): string {
     lines.push(` Idle: ${idle}`);
   }
   lines.push("");
-  lines.push(footerLine());
+  lines.push(await footerLine());
   return lines.join("\n");
 }
 
-function renderExit(e: IDBObj, canEdit: boolean): string {
+async function renderExit(e: IDBObj, canEdit: boolean): Promise<string> {
   const info  = getExitInfo(e);
   const title = info.alias && info.alias.toLowerCase() !== info.name.toLowerCase()
     ? `${info.name} <%cc${castAlias(info.alias)}%cn>`
     : info.name;
 
   const lines: string[] = [];
-  lines.push(headerLine(title));
+  lines.push(await headerLine(title));
   lines.push("");
 
   const desc = (e.state?.description as string) || "";
@@ -302,14 +291,14 @@ function renderExit(e: IDBObj, canEdit: boolean): string {
     lines.push(` Destination: ${String(e.state.destination)}`);
   }
   lines.push("");
-  lines.push(footerLine());
+  lines.push(await footerLine());
   return lines.join("\n");
 }
 
-function renderObject(o: IDBObj, showContents: boolean): string {
+async function renderObject(o: IDBObj, showContents: boolean): Promise<string> {
   const title = (o.state?.name as string) || o.name || "Unknown";
   const lines: string[] = [];
-  lines.push(headerLine(title));
+  lines.push(await headerLine(title));
   lines.push("");
 
   const desc = (o.state?.description as string) || "You see nothing special.";
@@ -317,13 +306,13 @@ function renderObject(o: IDBObj, showContents: boolean): string {
 
   if (showContents && o.contents && o.contents.length > 0) {
     lines.push("");
-    lines.push(sectionLine("Contents"));
+    lines.push(await sectionLine("Contents"));
     for (const c of o.contents) {
       lines.push(` ${(c.state?.name as string) || c.name || "(unknown)"}`);
     }
   }
   lines.push("");
-  lines.push(footerLine());
+  lines.push(await footerLine());
   return lines.join("\n");
 }
 
@@ -366,19 +355,19 @@ export default async (u: IUrsamuSDK) => {
 
   // ---- Player look ----
   if (isPlayer) {
-    u.send(renderPlayer(target));
+    u.send(await renderPlayer(target));
     return;
   }
 
   // ---- Exit look ----
   if (isExit) {
-    u.send(renderExit(target, canEditTarget));
+    u.send(await renderExit(target, canEditTarget));
     return;
   }
 
   // ---- Object look (anything that isn't a room/player/exit) ----
   if (!isRoom) {
-    u.send(renderObject(target, showContents));
+    u.send(await renderObject(target, showContents));
     return;
   }
 
@@ -413,7 +402,7 @@ export default async (u: IUrsamuSDK) => {
   const headerText = gridArea
     ? `${roomName} - %cc${gridArea}%cn`
     : roomName;
-  const defaultHeader = headerLine(headerText);
+  const defaultHeader = await headerLine(headerText);
   const nameOverride = await u.util.resolveFormat?.(target, "NAMEFORMAT", defaultHeader);
   lines.push(nameOverride != null ? nameOverride : defaultHeader);
   lines.push("");
@@ -439,7 +428,7 @@ export default async (u: IUrsamuSDK) => {
   } else {
     // Players —  <name 20>  <role 9>  <idle 6>  <shortdesc>
     if (showContents && characters.length > 0) {
-      lines.push(sectionLine("Players"));
+      lines.push(await sectionLine("Players"));
       for (const c of characters) {
         const cName   = coloredName(c);
         const idle    = SHOW_IDLE      ? formatIdle(c.state?.lastCommand as number) : "";
@@ -457,7 +446,7 @@ export default async (u: IUrsamuSDK) => {
 
     // Contents (non-player, non-exit objects)
     if (showContents && objects.length > 0) {
-      lines.push(sectionLine("Contents"));
+      lines.push(await sectionLine("Contents"));
       for (const o of objects) {
         lines.push(` ${o.name || u.util.displayName(o, actor)}`);
       }
@@ -481,14 +470,14 @@ export default async (u: IUrsamuSDK) => {
       }
       const sortedTypes = [...byType.keys()].sort();
       for (const type of sortedTypes) {
-        lines.push(sectionLine(sectionTitle(type)));
+        lines.push(await sectionLine(sectionTitle(type)));
         lines.push(nColumn(byType.get(type)!.map(formatExitEntry), 3));
       }
     }
   }
 
   // Footer
-  lines.push(footerLine());
+  lines.push(await footerLine());
 
   u.send(lines.join("\n"));
 
