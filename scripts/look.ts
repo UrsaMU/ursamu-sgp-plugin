@@ -224,6 +224,17 @@ function roleTag(obj: IDBObj): string {
   return "";
 }
 
+// Reality-plane filter. Each player/thing may carry a string `state.reality`
+// tag (e.g. "material", "penumbra", "deep-umbra"). Occupants are visible to
+// each other only when their tags match; absent defaults to "material" so
+// non-supernatural games see zero behavior change.
+function reality(obj: IDBObj): string {
+  return (obj?.state?.reality as string) || "material";
+}
+function sameReality(a: IDBObj, b: IDBObj): boolean {
+  return reality(a) === reality(b);
+}
+
 // ─── Single-target renderers ─────────────────────────────────────────────────
 
 async function renderPlayer(p: IDBObj, u: IUrsamuSDK): Promise<string> {
@@ -395,14 +406,16 @@ export default async (u: IUrsamuSDK) => {
   const characters = (target.contents || []).filter(
     (obj: IDBObj) =>
       obj.flags.has("player") &&
-      obj.flags.has("connected"),
+      obj.flags.has("connected") &&
+      sameReality(obj, actor),
   );
 
   const objects = (target.contents || []).filter(
     (obj: IDBObj) =>
       !obj.flags.has("player") &&
       !obj.flags.has("exit") &&
-      !obj.flags.has("room"),
+      !obj.flags.has("room") &&
+      sameReality(obj, actor),
   );
 
   const exits = (target.contents || []).filter((obj: IDBObj) =>
