@@ -224,6 +224,21 @@ function roleTag(obj: IDBObj): string {
   return "";
 }
 
+// Show non-concealed wielded weapons next to a player's name in the room view.
+// Items live in the player's contents; concealed items are hidden from passive
+// view (active +spot is the discovery path). No effect when nothing wielded.
+function visibleEqTag(p: IDBObj): string {
+  const carried = (p.contents ?? []) as IDBObj[];
+  const wielded = carried.filter((o) =>
+    o?.state?.kind === "weapon" &&
+    o?.state?.wielded === true &&
+    o?.state?.concealed !== true
+  );
+  if (wielded.length === 0) return "";
+  const names = wielded.map((w) => (w.state?.name as string) || w.name || "(unknown)");
+  return ` %cy[wielding: ${names.join(", ")}]%cn`;
+}
+
 // Reality-plane filter. Each player/thing may carry a string `state.reality`
 // tag (e.g. "material", "penumbra", "deep-umbra"). Occupants are visible to
 // each other only when their tags match; absent defaults to "material" so
@@ -481,7 +496,8 @@ export default async (u: IUrsamuSDK) => {
         const rolePad = " ".repeat(Math.max(1, 13 - visualLen(role)));
         const idlePad = SHOW_IDLE ? " ".repeat(Math.max(1, 4 - visualLen(idle))) : "";
 
-        lines.push(` ${cName}${namePad}${role}${rolePad}${idle}${idlePad}${desc}`.replace(/\s+$/, ""));
+        const eqTag = visibleEqTag(c);
+        lines.push(` ${cName}${namePad}${role}${rolePad}${idle}${idlePad}${desc}${eqTag}`.replace(/\s+$/, ""));
       }
     }
 
