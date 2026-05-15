@@ -1,4 +1,5 @@
 import type { IUrsamuSDK, IDBObj } from "../../@types/UrsamuSDK.ts";
+import { renderHeader, renderDivider, renderFooter } from "../src/renderer.ts";
 
 /**
  * Rhost Vision: look.ts
@@ -17,26 +18,19 @@ const CARDINAL = new Set([
   "up", "down", "u", "d",
 ]);
 
-// Centered border line: matches theme's headerfmt/dividerfmt styling.
-//   centerBorderLine("Title", "=", 78)  →  "=================== Title ===================="
-function centerBorderLine(text: string, char: string, width: number): string {
-  const middle = ` ${text} `;
-  const pad    = Math.max(0, width - visualLen(middle));
-  const left   = Math.floor(pad / 2);
-  const right  = pad - left;
-  return char.repeat(left) + middle + char.repeat(right);
+// Borders/titles route through the globals renderer so look uses the same
+// themed template (headerfmt / dividerfmt / footerfmt) as every other
+// command in the package.
+function headerLine(text: string): Promise<string> {
+  return renderHeader(text, WIDTH);
 }
 
-function headerLine(text: string): string {
-  return centerBorderLine(text, "=", WIDTH);
+function sectionLine(text: string): Promise<string> {
+  return renderDivider(text, WIDTH);
 }
 
-function sectionLine(text: string): string {
-  return centerBorderLine(text, "-", WIDTH);
-}
-
-function footerLine(): string {
-  return "=".repeat(WIDTH);
+function footerLine(): Promise<string> {
+  return renderFooter(WIDTH);
 }
 
 /** Measure visual width, stripping color codes (MUSH %c* and inline <#rrggbb>). */
@@ -117,14 +111,18 @@ function coloredName(obj: IDBObj): string {
 }
 
 function formatIdle(lastCommand: number | undefined): string {
-  if (!lastCommand) return "%cx??%cn";
+  if (!lastCommand) return "%ch%cx0s%cn";
   const diff = Math.floor((Date.now() - lastCommand) / 1000);
+  if (diff === 0) return "%ch%cx0s%cn";
   if (diff < 60) return `%cg${diff}s%cn`;
   if (diff < 600) return `%cg${Math.floor(diff / 60)}m%cn`;
   if (diff < 3600) return `%cy${Math.floor(diff / 60)}m%cn`;
   if (diff < 86400) return `%cy${Math.floor(diff / 3600)}h%cn`;
   return `%ch%cx${Math.floor(diff / 86400)}d%cn`;
 }
+
+const SHORTDESC_PROMPT = "%ch%cxUse '&short-desc me=<desc>' to set.%cn";
+const NO_DESCRIPTION   = "You don't see anything special.";
 
 interface IAttr {
   name?: string;
@@ -197,7 +195,7 @@ function sectionTitle(type: string): string {
 
 function formatExitEntry(info: { name: string; alias: string }): string {
   if (info.alias && info.alias.toLowerCase() !== info.name.toLowerCase()) {
-    return `<%cc${info.alias}%cn> ${info.name}`;
+    return `<%cc${castAlias(info.alias)}%cn> ${info.name}`;
   }
   return info.name;
 }
@@ -210,6 +208,17 @@ const ROLE_TAGS: Array<{ flag: string; display: string }> = /* {{ROLE_TAGS}} */ 
   { flag: "staff",     display: "(Staff)"  },
 ];
 
+// Replaced at install time from theme.look.{showIdle,showShortDesc,aliasCase}.
+const SHOW_IDLE      = /* {{SHOW_IDLE}} */      true;
+const SHOW_SHORTDESC = /* {{SHOW_SHORTDESC}} */ true;
+const ALIAS_CASE: "upper" | "lower" | "preserve" = /* {{ALIAS_CASE}} */ "preserve";
+
+function castAlias(alias: string): string {
+  if (ALIAS_CASE === "upper") return alias.toUpperCase();
+  if (ALIAS_CASE === "lower") return alias.toLowerCase();
+  return alias;
+}
+
 function roleTag(obj: IDBObj): string {
   for (const t of ROLE_TAGS) if (obj.flags.has(t.flag)) return t.display;
   return "";
@@ -217,64 +226,65 @@ function roleTag(obj: IDBObj): string {
 
 // ─── Single-target renderers ─────────────────────────────────────────────────
 
-function renderPlayer(p: IDBObj): string {
-  const display = coloredName(p);
+async function renderPlayer(p: IDBObj, u: IUrsamuSDK): Promise<string> {
+  const baseDisplay = coloredName(p);
+  const display = (await u.util.resolveFormat?.(p, "NAMEFORMAT", baseDisplay)) ?? baseDisplay;
   const role    = roleTag(p);
   const titleParts = [display];
   if (role) titleParts.push(role);
   const title = titleParts.join(" ");
 
   const lines: string[] = [];
-  lines.push(headerLine(title));
+  lines.push(await headerLine(title));
   lines.push("");
 
-  const short = getShortDesc(p);
-  if (short) {
-    lines.push(` ${short}`);
-    lines.push("");
-  }
+  const desc = (p.state?.description as string) || NO_DESCRIPTION;
+  for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
 
-  const desc = (p.state?.description as string) || "";
-  if (desc) {
-    for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
-    lines.push("");
-  }
-
-  // Carrying — visible items in their contents (skip opaque/dark to honor privacy)
-  const carried = (p.contents ?? []).filter(
+  // Held contents — skip dark/opaque to honor privacy. Split into held
+  // players vs carried things; the things section uses the "Carrying" label.
+  const visible = (p.contents ?? []).filter(
     (o: IDBObj) => !o.flags.has("dark") && !o.flags.has("opaque"),
   );
-  if (carried.length > 0) {
-    lines.push(sectionLine("Carrying"));
-    const names = carried.map((o: IDBObj) => (o.state?.name as string) || o.name || "(unknown)");
+  const heldPlayers = visible.filter((o: IDBObj) => o.flags.has("player"));
+  const heldThings  = visible.filter((o: IDBObj) => !o.flags.has("player") && !o.flags.has("exit"));
+
+  if (heldPlayers.length > 0) {
+    lines.push("");
+    lines.push(await sectionLine("Players"));
+    for (const c of heldPlayers) {
+      const cName = coloredName(c);
+      const role  = roleTag(c);
+      lines.push(role ? ` ${cName} ${role}` : ` ${cName}`);
+    }
+  }
+
+  if (heldThings.length > 0) {
+    lines.push("");
+    lines.push(await sectionLine("Carrying"));
+    const names = heldThings.map((o: IDBObj) => (o.state?.name as string) || o.name || "(unknown)");
     const shown = names.slice(0, 5);
     if (names.length > 5) shown.push(`... and ${names.length - 5} more`);
     lines.push(` ${shown.join(", ")}`);
   }
-
-  const isConnected = p.flags.has("connected");
-  const idle  = isConnected ? formatIdle(p.state?.lastCommand as number) : "%cxOffline%cn";
-  if (carried.length === 0) lines.push("");
-  lines.push(` Idle: ${idle}`);
   lines.push("");
-  lines.push(footerLine());
+  lines.push(await footerLine());
   return lines.join("\n");
 }
 
-function renderExit(e: IDBObj, canEdit: boolean): string {
+async function renderExit(e: IDBObj, canEdit: boolean, u: IUrsamuSDK): Promise<string> {
   const info  = getExitInfo(e);
-  const title = info.alias && info.alias.toLowerCase() !== info.name.toLowerCase()
-    ? `${info.name} <%cc${info.alias}%cn>`
+  const baseTitle = info.alias && info.alias.toLowerCase() !== info.name.toLowerCase()
+    ? `${info.name} <%cc${castAlias(info.alias)}%cn>`
     : info.name;
+  const title = (await u.util.resolveFormat?.(e, "NAMEFORMAT", baseTitle)) ?? baseTitle;
 
   const lines: string[] = [];
-  lines.push(headerLine(title));
+  lines.push(await headerLine(title));
   lines.push("");
 
-  const desc = (e.state?.description as string) || "";
-  if (desc) {
-    for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
-  }
+  const desc = (e.state?.description as string) || NO_DESCRIPTION;
+  for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
 
   // Show destination to anyone who can edit the exit (typically staff or owner).
   if (canEdit && e.state?.destination) {
@@ -282,28 +292,44 @@ function renderExit(e: IDBObj, canEdit: boolean): string {
     lines.push(` Destination: ${String(e.state.destination)}`);
   }
   lines.push("");
-  lines.push(footerLine());
+  lines.push(await footerLine());
   return lines.join("\n");
 }
 
-function renderObject(o: IDBObj, showContents: boolean): string {
-  const title = (o.state?.name as string) || o.name || "Unknown";
+async function renderObject(o: IDBObj, showContents: boolean, u: IUrsamuSDK): Promise<string> {
+  const baseTitle = (o.state?.name as string) || o.name || "Unknown";
+  const title = (await u.util.resolveFormat?.(o, "NAMEFORMAT", baseTitle)) ?? baseTitle;
   const lines: string[] = [];
-  lines.push(headerLine(title));
+  lines.push(await headerLine(title));
   lines.push("");
 
-  const desc = (o.state?.description as string) || "You see nothing special.";
+  const desc = (o.state?.description as string) || NO_DESCRIPTION;
   for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
 
   if (showContents && o.contents && o.contents.length > 0) {
-    lines.push("");
-    lines.push(sectionLine("Contents"));
-    for (const c of o.contents) {
-      lines.push(` ${(c.state?.name as string) || c.name || "(unknown)"}`);
+    const heldPlayers = o.contents.filter((c: IDBObj) => c.flags.has("player"));
+    const heldThings  = o.contents.filter((c: IDBObj) => !c.flags.has("player") && !c.flags.has("exit"));
+
+    if (heldPlayers.length > 0) {
+      lines.push("");
+      lines.push(await sectionLine("Players"));
+      for (const c of heldPlayers) {
+        const cName = coloredName(c);
+        const role  = roleTag(c);
+        lines.push(role ? ` ${cName} ${role}` : ` ${cName}`);
+      }
+    }
+
+    if (heldThings.length > 0) {
+      lines.push("");
+      lines.push(await sectionLine("Contents"));
+      for (const c of heldThings) {
+        lines.push(` ${(c.state?.name as string) || c.name || "(unknown)"}`);
+      }
     }
   }
   lines.push("");
-  lines.push(footerLine());
+  lines.push(await footerLine());
   return lines.join("\n");
 }
 
@@ -346,19 +372,19 @@ export default async (u: IUrsamuSDK) => {
 
   // ---- Player look ----
   if (isPlayer) {
-    u.send(renderPlayer(target));
+    u.send(await renderPlayer(target, u));
     return;
   }
 
   // ---- Exit look ----
   if (isExit) {
-    u.send(renderExit(target, canEditTarget));
+    u.send(await renderExit(target, canEditTarget, u));
     return;
   }
 
   // ---- Object look (anything that isn't a room/player/exit) ----
   if (!isRoom) {
-    u.send(renderObject(target, showContents));
+    u.send(await renderObject(target, showContents, u));
     return;
   }
 
@@ -393,7 +419,7 @@ export default async (u: IUrsamuSDK) => {
   const headerText = gridArea
     ? `${roomName} - %cc${gridArea}%cn`
     : roomName;
-  const defaultHeader = headerLine(headerText);
+  const defaultHeader = await headerLine(headerText);
   const nameOverride = await u.util.resolveFormat?.(target, "NAMEFORMAT", defaultHeader);
   lines.push(nameOverride != null ? nameOverride : defaultHeader);
   lines.push("");
@@ -419,25 +445,25 @@ export default async (u: IUrsamuSDK) => {
   } else {
     // Players —  <name 20>  <role 9>  <idle 6>  <shortdesc>
     if (showContents && characters.length > 0) {
-      lines.push(sectionLine("Players"));
+      lines.push(await sectionLine("Players"));
       for (const c of characters) {
         const cName   = coloredName(c);
-        const idle    = formatIdle(c.state?.lastCommand as number);
+        const idle    = SHOW_IDLE      ? formatIdle(c.state?.lastCommand as number) : "";
         const role    = roleTag(c);
-        const desc    = getShortDesc(c);
+        const desc    = SHOW_SHORTDESC ? (getShortDesc(c) || SHORTDESC_PROMPT) : "";
 
         // Pad by *visible* width so monikers with embedded color codes line up.
         const namePad = " ".repeat(Math.max(1, 21 - visualLen(cName)));
         const rolePad = " ".repeat(Math.max(1, 13 - visualLen(role)));
-        const idlePad = " ".repeat(Math.max(1,  4 - visualLen(idle)));
+        const idlePad = SHOW_IDLE ? " ".repeat(Math.max(1, 4 - visualLen(idle))) : "";
 
-        lines.push(` ${cName}${namePad}${role}${rolePad}${idle}${idlePad}${desc}`);
+        lines.push(` ${cName}${namePad}${role}${rolePad}${idle}${idlePad}${desc}`.replace(/\s+$/, ""));
       }
     }
 
     // Contents (non-player, non-exit objects)
     if (showContents && objects.length > 0) {
-      lines.push(sectionLine("Contents"));
+      lines.push(await sectionLine("Contents"));
       for (const o of objects) {
         lines.push(` ${o.name || u.util.displayName(o, actor)}`);
       }
@@ -461,14 +487,14 @@ export default async (u: IUrsamuSDK) => {
       }
       const sortedTypes = [...byType.keys()].sort();
       for (const type of sortedTypes) {
-        lines.push(sectionLine(sectionTitle(type)));
+        lines.push(await sectionLine(sectionTitle(type)));
         lines.push(nColumn(byType.get(type)!.map(formatExitEntry), 3));
       }
     }
   }
 
   // Footer
-  lines.push(footerLine());
+  lines.push(await footerLine());
 
   u.send(lines.join("\n"));
 

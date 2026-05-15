@@ -41,6 +41,23 @@ engine.registerFunction("ansicenter", {
   },
 });
 
+// ansipad(str, width, fill) -- right-pad `str` with `fill` to `width` visible
+// characters. Use this in headerfmt/dividerfmt to build left-anchored rules:
+//   "%qsep[repeat(%qsmaj,5)]%cn %qtitle%0%cn %qsep[ansipad(%qtitle%0,sub(%2,7),%qsmaj)]%cn"
+//   →  "%cr=====%cn %ch%cyTitle%cn %cr===...==%cn"
+engine.registerFunction("ansipad", {
+  minArgs: 2,
+  maxArgs: 3,
+  exec(args: unknown[]) {
+    const str  = String(args[0] ?? "");
+    const w    = parseInt(String(args[1] ?? "78"), 10);
+    const fill = String(args[2] ?? " ").charAt(0) || " ";
+    const vis  = visLen(str);
+    const pad  = Math.max(0, w - vis);
+    return fill.repeat(pad);
+  },
+});
+
 async function evalFmt(
   fmt: string,
   arg0: string,
