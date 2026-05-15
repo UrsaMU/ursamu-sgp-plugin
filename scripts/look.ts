@@ -400,8 +400,18 @@ export default async (u: IUrsamuSDK) => {
   }
 
   // ---- Room display: Rhost Vision ----
+  // Reality-plane descriptions: rooms may carry per-plane descriptions on
+  // `state.descriptions[<plane>]` or shorthand keys like
+  // `state.penumbraDescription`. The looker's plane (default "material")
+  // selects which is used; falls back to `state.description`.
+  const lookerPlane = reality(actor);
+  const planeDescMap = (target.state.descriptions as Record<string, string> | undefined) ?? {};
+  const shorthandKey = `${lookerPlane}Description` as const;
   const description =
-    (target.state.description as string) || "You see nothing special.";
+    planeDescMap[lookerPlane] ||
+    (target.state[shorthandKey] as string | undefined) ||
+    (target.state.description as string) ||
+    "You see nothing special.";
 
   const characters = (target.contents || []).filter(
     (obj: IDBObj) =>
