@@ -235,9 +235,21 @@ function sameReality(a: IDBObj, b: IDBObj): boolean {
   return reality(a) === reality(b);
 }
 
+// Plane-aware description lookup: rooms, players, things, and exits may all
+// carry per-plane descriptions. Resolution order, highest-priority first:
+//   1. state.descriptions[<plane>]    -- map form
+//   2. state[`${plane}Description`]   -- shorthand
+//   3. state.description              -- legacy default
+function planeDesc(target: IDBObj, plane: string, fallback: string): string {
+  const map = (target.state?.descriptions as Record<string, string> | undefined) ?? {};
+  const shorthand = (target.state?.[`${plane}Description`] as string | undefined) ?? "";
+  return map[plane] || shorthand || (target.state?.description as string | undefined) || fallback;
+}
+
 // ─── Single-target renderers ─────────────────────────────────────────────────
 
 async function renderPlayer(p: IDBObj, u: IUrsamuSDK): Promise<string> {
+  const lookerPlane = reality(u.me as IDBObj);
   const baseDisplay = coloredName(p);
   const display = (await u.util.resolveFormat?.(p, "NAMEFORMAT", baseDisplay)) ?? baseDisplay;
   const role    = roleTag(p);
@@ -249,7 +261,7 @@ async function renderPlayer(p: IDBObj, u: IUrsamuSDK): Promise<string> {
   lines.push(await headerLine(title));
   lines.push("");
 
-  const desc = (p.state?.description as string) || NO_DESCRIPTION;
+  const desc = planeDesc(p, lookerPlane, NO_DESCRIPTION);
   for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
 
   // Held contents — skip dark/opaque to honor privacy. Split into held
@@ -294,7 +306,7 @@ async function renderExit(e: IDBObj, canEdit: boolean, u: IUrsamuSDK): Promise<s
   lines.push(await headerLine(title));
   lines.push("");
 
-  const desc = (e.state?.description as string) || NO_DESCRIPTION;
+  const desc = planeDesc(e, reality(u.me as IDBObj), NO_DESCRIPTION);
   for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
 
   // Show destination to anyone who can edit the exit (typically staff or owner).
@@ -314,7 +326,7 @@ async function renderObject(o: IDBObj, showContents: boolean, u: IUrsamuSDK): Pr
   lines.push(await headerLine(title));
   lines.push("");
 
-  const desc = (o.state?.description as string) || NO_DESCRIPTION;
+  const desc = planeDesc(o, reality(u.me as IDBObj), NO_DESCRIPTION);
   for (const l of wordWrap(desc, WIDTH - 1).split("\n")) lines.push(` ${l}`);
 
   if (showContents && o.contents && o.contents.length > 0) {
@@ -400,18 +412,7 @@ export default async (u: IUrsamuSDK) => {
   }
 
   // ---- Room display: Rhost Vision ----
-  // Reality-plane descriptions: rooms may carry per-plane descriptions on
-  // `state.descriptions[<plane>]` or shorthand keys like
-  // `state.penumbraDescription`. The looker's plane (default "material")
-  // selects which is used; falls back to `state.description`.
-  const lookerPlane = reality(actor);
-  const planeDescMap = (target.state.descriptions as Record<string, string> | undefined) ?? {};
-  const shorthandKey = `${lookerPlane}Description` as const;
-  const description =
-    planeDescMap[lookerPlane] ||
-    (target.state[shorthandKey] as string | undefined) ||
-    (target.state.description as string) ||
-    "You see nothing special.";
+  const description = planeDesc(target, reality(actor), "You see nothing special.");
 
   const characters = (target.contents || []).filter(
     (obj: IDBObj) =>
