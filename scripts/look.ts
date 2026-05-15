@@ -226,8 +226,9 @@ function roleTag(obj: IDBObj): string {
 
 // ─── Single-target renderers ─────────────────────────────────────────────────
 
-async function renderPlayer(p: IDBObj): Promise<string> {
-  const display = coloredName(p);
+async function renderPlayer(p: IDBObj, u: IUrsamuSDK): Promise<string> {
+  const baseDisplay = coloredName(p);
+  const display = (await u.util.resolveFormat?.(p, "NAMEFORMAT", baseDisplay)) ?? baseDisplay;
   const role    = roleTag(p);
   const titleParts = [display];
   if (role) titleParts.push(role);
@@ -271,11 +272,12 @@ async function renderPlayer(p: IDBObj): Promise<string> {
   return lines.join("\n");
 }
 
-async function renderExit(e: IDBObj, canEdit: boolean): Promise<string> {
+async function renderExit(e: IDBObj, canEdit: boolean, u: IUrsamuSDK): Promise<string> {
   const info  = getExitInfo(e);
-  const title = info.alias && info.alias.toLowerCase() !== info.name.toLowerCase()
+  const baseTitle = info.alias && info.alias.toLowerCase() !== info.name.toLowerCase()
     ? `${info.name} <%cc${castAlias(info.alias)}%cn>`
     : info.name;
+  const title = (await u.util.resolveFormat?.(e, "NAMEFORMAT", baseTitle)) ?? baseTitle;
 
   const lines: string[] = [];
   lines.push(await headerLine(title));
@@ -294,8 +296,9 @@ async function renderExit(e: IDBObj, canEdit: boolean): Promise<string> {
   return lines.join("\n");
 }
 
-async function renderObject(o: IDBObj, showContents: boolean): Promise<string> {
-  const title = (o.state?.name as string) || o.name || "Unknown";
+async function renderObject(o: IDBObj, showContents: boolean, u: IUrsamuSDK): Promise<string> {
+  const baseTitle = (o.state?.name as string) || o.name || "Unknown";
+  const title = (await u.util.resolveFormat?.(o, "NAMEFORMAT", baseTitle)) ?? baseTitle;
   const lines: string[] = [];
   lines.push(await headerLine(title));
   lines.push("");
@@ -369,19 +372,19 @@ export default async (u: IUrsamuSDK) => {
 
   // ---- Player look ----
   if (isPlayer) {
-    u.send(await renderPlayer(target));
+    u.send(await renderPlayer(target, u));
     return;
   }
 
   // ---- Exit look ----
   if (isExit) {
-    u.send(await renderExit(target, canEditTarget));
+    u.send(await renderExit(target, canEditTarget, u));
     return;
   }
 
   // ---- Object look (anything that isn't a room/player/exit) ----
   if (!isRoom) {
-    u.send(await renderObject(target, showContents));
+    u.send(await renderObject(target, showContents, u));
     return;
   }
 
